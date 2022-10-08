@@ -113,10 +113,9 @@ class MainPage(BeautifulSoup):
 if __name__ == '__main__':
     scraper = Scraper(url='https://www.humblebundle.com/books/')
     main_page = MainPage(scraper.main_html)
-
     bundles = []
-    for url in main_page.bundle_urls:
-        bundle_html = scraper.scrape_bundle(url)
+    scraper.scrape_bundle_pages(main_page.bundle_urls)
+    for bundle_html in scraper.bundle_htmls:
         bundle_page = BundlePage(bundle_html)
         books = bundle_page.books
         with open('books.txt', 'a') as f:
