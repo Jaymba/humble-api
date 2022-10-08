@@ -23,6 +23,15 @@ class Scraper():
         self.driver.get(url)
         html = self.driver.page_source 
         return html 
+    
+    def scrape_bundle_pages(self, urls):
+        self.bundle_htmls = []
+
+        for url in urls:
+            self.driver.get(url)
+            self.bundle_htmls.append(self.driver.page_source)
+
+        
 
 
 if __name__ == '__main__':
