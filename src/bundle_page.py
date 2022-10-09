@@ -4,18 +4,45 @@ from bs4 import BeautifulSoup
 import re
 
 from book import Book
+'''
+{
+    Bundle Title:{
+        Book Title:{
+            Author:
+            Publisher:
+            Formats:
+            Tier:
+            Description
+        }
 
+        Bundle Type:
+        Start Date:
+        End Date:
+        
+    }
+}
+'''
     
-class BundlePage(BeautifulSoup):
+class BundlePages():
     
-    def __init__(self, html):
+    def __init__(self, html_pages):
         
         #with open(html, 'rb') as f:
         #    self.html = f.read()
-        self.html = html
+        self.html_pages = html_pages
+        self.bundles = {}
+        self.parse_bundle_pages()
 
-        super().__init__(self.html, 'html.parser')
-        self.parse_bundle_page()
+    
+    def parse_bundle_pages(self):
+        for bundle_html in self.html_pages:
+#            self.cur_html = bundle_html
+            self.parse_bundle_page(bundle_html)
+            
+
+            #with open('books.txt', 'a') as f:
+            #    [f.write(book.get_str()) for book in books]
+
 
 
     def books_to_file(self, file_name):
@@ -23,28 +50,42 @@ class BundlePage(BeautifulSoup):
             for book in self.books:
                 f.write(str(book).encode())
 
-    def parse_bundle_page(self):
+    def parse_bundle_page(self,html):
+        bs = BeautifulSoup(html,'html.parser')
 
-        heading = self.find('h1', 'heading-large')
-        self.bundle_title = heading.img['alt'].split(':')[-1].strip()
-        self.bundle_type = heading.span.string
+        heading = bs.find('h1', 'heading-large')
+        bundle_title = heading.img['alt'].split(':')[-1].strip()
+        bundle_type = heading.span.string
 
-        books = self.find_all('div', 'tier-item-details-view')
-        self.books = []
+        book_sections = bs.find_all('div', 'tier-item-details-view')
+        books = {} 
 
-        for book in books:
-            self.cur_book = book
-            self.books.append(Book(
-                bundle_title=self.bundle_title,
-                bundle_type=self.bundle_type,
-                title= self.get_title(),
-                author=self.get_author(),
-                publisher=self.get_publisher(),
-                formats=self.get_formats(),
-                price=self.get_price(),
-                description=self.get_description(),
-                
-                ))
+        for section in book_sections:
+            self.cur_book = section 
+
+            books[self.get_title()] = {
+                    'Author': self.get_author(),
+                    'Publisher':self.get_publisher(),
+                    'Formats':self.get_formats(),
+                    'Price':self.get_price(),
+                    'Description':self.get_description(),
+            },
+            
+
+        self.bundles[bundle_title] = books, {'Bundle Type': bundle_type}
+        
+
+#        self.books.append(Book(
+#                bundle_title=self.bundle_title,
+#                bundle_type=self.bundle_type,
+#                title= self.get_title(),
+#                author=self.get_author(),
+#                publisher=self.get_publisher(),
+#                formats=self.get_formats(),
+#                price=self.get_price(),
+#                description=self.get_description(),
+#        ))
+        
 
     def get_description(self):
         description = self.cur_book.find('section','description')
@@ -113,11 +154,14 @@ class MainPage(BeautifulSoup):
 if __name__ == '__main__':
     scraper = Scraper(url='https://www.humblebundle.com/books/')
     main_page = MainPage(scraper.main_html)
-    bundles = []
+#    bundles = []
     scraper.scrape_bundle_pages(main_page.bundle_urls)
-    for bundle_html in scraper.bundle_htmls:
+    bundle_pages = scraper.bundle_htmls
+    bundles = BundlePages(bundle_pages)
+'''    for bundle_html in scraper.bundle_htmls:
         bundle_page = BundlePage(bundle_html)
         books = bundle_page.books
         with open('books.txt', 'a') as f:
             [f.write(book.get_str()) for book in books]
         bundles.append(books)
+'''
