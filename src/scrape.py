@@ -1,11 +1,8 @@
-from cgitb import html
-from ssl import Options
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import re
 import json
+
 
 class Scraper():
     home_page = 'https://www.humblebundle.com/books'
@@ -122,6 +119,10 @@ class Scraper():
             return re.search(r'\d+', string).group(0)
         return 0
 
+    def write_to_file(self, file_name='books.json'):
+        with open(file_name,'w') as f:
+            json.dump(self.bundles, f, indent=4)
+
 
 
 
@@ -129,7 +130,6 @@ if __name__ == '__main__':
     scrape = Scraper()
     scrape.scrape_bundle_pages()
     scrape.parse_bundle_pages()
+    scrape.write_to_file()
 
-    with open('books.json', 'w') as f:
-        f.write(json.dumps(scrape.bundles))
     
