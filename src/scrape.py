@@ -21,14 +21,7 @@ class Scraper():
         self.driver.close
 
         self.get_bundle_urls() 
-#    def scrape(self, url):
-#        self.driver.get(url)
-#        self.home_page_html = self.driver.page_source
 
-#    def scrape_bundle(self, url):
-#        self.driver.get(url)
-#        html = self.driver.page_source 
-#        return html 
     
     def scrape_bundle_pages(self):
         self.bundle_htmls = []
@@ -38,13 +31,6 @@ class Scraper():
             self.bundle_htmls.append(self.driver.page_source)
         
     
-#    def __init__(self, html_pages):
-#        
-#        #with open(html, 'rb') as f:
-#        #    self.html = f.read()
-#        self.html_pages = html_pages
-#        self.bundles = {}
-#        self.parse_bundle_pages()
     def get_bundle_urls(self):
         links = self.home_page_html.select('a.bundle')
         self.bundle_urls = ['https://www.humblebundle.com' + link['href'].split('?')[0] for link in links]
@@ -67,17 +53,18 @@ class Scraper():
 
         for section in book_sections:
             #self.cur_book = section 
-
-            books[self.get_title(section)] = {
+            book = {self.get_title(section):{
                     'Author': self.get_author(section),
                     'Publisher':self.get_publisher(section),
                     'Formats':self.get_formats(section),
                     'Price':self.get_price(section),
-                    'Description':self.get_description(section),
-            },
-            
+                    'Description':self.get_description(section)}}
 
-        self.bundles[bundle_title] = books, {'Bundle Type': bundle_type}
+            books.update(book)
+            
+        books.update({'Bundle Type': bundle_type})
+
+        self.bundles[bundle_title] = books
         
 
     def books_to_file(self, file_name):
@@ -85,18 +72,6 @@ class Scraper():
             for book in self.books:
                 f.write(str(book).encode())
 
-
-#        self.books.append(Book(
-#                bundle_title=self.bundle_title,
-#                bundle_type=self.bundle_type,
-#                title= self.get_title(),
-#                author=self.get_author(),
-#                publisher=self.get_publisher(),
-#                formats=self.get_formats(),
-#                price=self.get_price(),
-#                description=self.get_description(),
-#        ))
-        
 
     def get_description(self,html):
         description = html.find('section','description')
@@ -148,25 +123,13 @@ class Scraper():
         return 0
 
 
-class MainPage(BeautifulSoup):
-    def __init__(self, html):
-        self.html = html
-#        with open('main.html') as f:
-#            self.html = f.read()
-            
-        super().__init__(self.html, 'html.parser')
-        self.get_bundle_urls()
-
-    def get_bundle_urls(self):
-        links = self.select('a.bundle')
-        self.bundle_urls = ['https://www.humblebundle.com' + link['href'].split('?')[0] for link in links]
-        
 
 
 if __name__ == '__main__':
     scrape = Scraper()
     scrape.scrape_bundle_pages()
     scrape.parse_bundle_pages()
+
     with open('books.json', 'w') as f:
         f.write(json.dumps(scrape.bundles))
     
