@@ -18,6 +18,32 @@ class Scraper():
         self.driver.close
 
         self.get_bundle_urls() 
+    
+
+    def updated_list(self):
+        self.get_bundle_titles()
+        cur_titles = self.load_json('books.json')
+        
+        new_titles = list(set(self.current_bundle_titles).symmetric_difference(set(cur_titles)))
+
+        if(new_titles):
+            return new_titles
+        else:
+            return False
+
+    def get_bundle_titles(self):
+        sections = self.home_page_html.find_all('div', 'info-section')
+        self.current_bundle_titles = []
+        for section in sections:
+            title = section.find('span', 'name').string
+            title = title.split(':')[-1].strip()
+            self.current_bundle_titles.append(title)
+
+    def load_json(self, file_name):
+
+        with open(file_name, 'r') as f:
+            bundles = json.load(f)    
+        return bundles
 
     
     def scrape_bundle_pages(self):
@@ -26,17 +52,14 @@ class Scraper():
         for url in self.bundle_urls:
             self.driver.get(url)
             self.bundle_htmls.append(self.driver.page_source)
-        
     
     def get_bundle_urls(self):
         links = self.home_page_html.select('a.bundle')
         self.bundle_urls = ['https://www.humblebundle.com' + link['href'].split('?')[0] for link in links]
-
     
     def parse_bundle_pages(self):
         for bundle_html in self.bundle_htmls:
             self.parse_bundle_page(bundle_html)
-
 
     def parse_bundle_page(self,html):
         bs = BeautifulSoup(html,'html.parser')
@@ -63,13 +86,6 @@ class Scraper():
 
         self.bundles[bundle_title] = books
         
-
-    def books_to_file(self, file_name):
-        with open(file_name, 'ab') as f:
-            for book in self.books:
-                f.write(str(book).encode())
-
-
     def get_description(self,html):
         description = html.find('section','description')
         if description.p:
@@ -86,7 +102,6 @@ class Scraper():
         
         return ''
 
-
     def get_publisher(self,html):
         publisher = ''
         divs = html.find_all('div','publishers-and-developers')
@@ -96,7 +111,6 @@ class Scraper():
                 break
 
         return publisher
-                
 
     def get_author(self,html):
         author = ''
@@ -111,8 +125,6 @@ class Scraper():
     def get_title(self,html):
         return html.find('h2','heading-medium').string
 
-
-    
     def get_price(self,html):
         string = html.find('span', 'tier-price').string
         if(string):
@@ -128,8 +140,15 @@ class Scraper():
 
 if __name__ == '__main__':
     scrape = Scraper()
-    scrape.scrape_bundle_pages()
-    scrape.parse_bundle_pages()
-    scrape.write_to_file()
+    scrape.get_bundle_titles()
+#    scrape.scrape_bundle_pages()
+#    scrape.parse_bundle_pages()
+#    scrape.write_to_file()
+    
+    with open('books.json', 'r') as f:
+        bundles = json.load(f)
+
+    print(list(set(scrape.current_bundle_titles).symmetric_difference(set(bundles.keys()))))
 
     
+
